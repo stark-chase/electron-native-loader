@@ -1,11 +1,22 @@
 {
   "name": "electron-native-loader",
   "version": "0.1.0",
-  "description": "",
+  "description": "The WebPack loader for Electron node native modules",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "keywords": [
+    "electron",
+    "angular",
+    "native",
+    "webpack"
+  ],
+  "homepage": "https://github.com/evonox/electron-native-loader",
   "author": "Viktor Prehnal",
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/evonox/electron-native-loader.git"
+  }
 }
