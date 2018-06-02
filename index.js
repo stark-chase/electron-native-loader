@@ -7,7 +7,7 @@ const substitutionMapFile = "./ElectronNativeSubstitutionMap.json";
 let dependencies = {};
 if(fs.existsSync(substitutionMapFile)) {
     dependencies = JSON.parse(fs.readFileSync(substitutionMapFile).toString());
-    fs.unlinkSync(substitutionMapFile);
+   fs.unlinkSync(substitutionMapFile);
 } else {
     console.log("Warning: File " + substitutionMapFile + " not found.");
 }
@@ -34,10 +34,12 @@ module.exports = function(source) {
     } else {
         if(dependencies[modulePath])
             modulePath = dependencies[modulePath];
-        for(let dep in dependencies) {
-            if(modulePath.includes(dependencies[dep])) {
-                modulePath = dependencies[dep];
-                break;
+        else {
+            for(let dep in dependencies) {
+                if(modulePath.includes(path.basename(dependencies[dep]))) {
+                    modulePath = dependencies[dep];
+                    break;
+                }
             }
         }
         if (modulePath[0] !== '.') {
