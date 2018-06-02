@@ -1,50 +1,67 @@
-const loaderUtils = require('loader-utils');
 const fs = require("fs");
 const path = require("path");
+const loaderUtils = require('loader-utils');
 
+// substitution-map file name
 const substitutionMapFile = "./ElectronNativeSubstitutionMap.json";
 
 let dependencies = {};
-if(fs.existsSync(substitutionMapFile)) {
-    dependencies = JSON.parse(fs.readFileSync(substitutionMapFile).toString());
-   fs.unlinkSync(substitutionMapFile);
-} else {
-    console.log("Warning: File " + substitutionMapFile + " not found.");
+
+function loadSubstitutionMap() {
+    if(fs.existsSync(substitutionMapFile)) {
+        dependencies = JSON.parse(fs.readFileSync(substitutionMapFile).toString());
+       fs.unlinkSync(substitutionMapFile);
+    } else {
+        console.log("Warning: File " + substitutionMapFile + " not found.");
+    }    
 }
 
-module.exports = function(source) {
-    let modulePath = loaderUtils.interpolateName(this, "[name].[ext]", {context: "."});
-    let moduleDir = loaderUtils.interpolateName(this, "[path]", {context: "."});
-    let options = loaderUtils.getOptions(this);
-    if(modulePath.endsWith(".js")) {
-        for(let keyFile in dependencies) {
-            let fileToSearch = keyFile.replace(".", "\\.");
-            let regExpPattern = `require\\(['"]bindings['"]\\)\\(['"]${fileToSearch}['"]\\)`;
-            // console.log(regExpPattern);
-            // process.abort();
-            let regExp = new RegExp(regExpPattern, "g");
-            let moduleFullPath = path.resolve(options.outputPath, dependencies[keyFile]);
-            moduleFullPath = path.relative(process.cwd(), moduleFullPath);
-            moduleFullPath = path.relative(moduleDir, moduleFullPath);
-            moduleFullPath = path.posix.normalize(moduleFullPath);
-            moduleFullPath = JSON.stringify(moduleFullPath);
-            source = source.replace(regExp, `require(${moduleFullPath})`);
-        }
-        return source;
+function processJavaScriptFile(source, options, moduleDirectory) {
+    for(let nodeModule in dependencies) {
+        let fileToSearch = nodeModule.replace(".", "\\.");
+        let regExpPattern = `require\\(['"]bindings['"]\\)\\(['"]${fileToSearch}['"]\\)`;
+        let regExp = new RegExp(regExpPattern, "g");
+        // console.log(regExpPattern);
+        // process.abort();
+
+        let modulePath = path.resolve(options.outputPath, dependencies[nodeModule]);
+        modulePath = path.relative(process.cwd(), modulePath);
+        modulePath = path.relative(moduleDirectory, modulePath);
+        modulePath = path.posix.normalize(modulePath);
+        modulePath = JSON.stringify(modulePath);
+        source = source.replace(regExp, `require(${modulePath})`);
+    }
+    return source;
+}
+
+function processNodeBinary(moduleName) {
+    let electronModulePath = "";
+    if(dependencies[moduleName]) {
+        electronModulePath = dependencies[moduleName];
     } else {
-        if(dependencies[modulePath])
-            modulePath = dependencies[modulePath];
-        else {
-            for(let dep in dependencies) {
-                if(modulePath.includes(path.basename(dependencies[dep]))) {
-                    modulePath = dependencies[dep];
-                    break;
-                }
+        for(let nodeModule in dependencies) {
+            if(moduleName.includes(path.basename(dependencies[nodeModule]))) {
+                electronModulePath = dependencies[nodeModule];
+                break;
             }
         }
-        if (modulePath[0] !== '.') {
-            modulePath = './' + modulePath
-        }   
     }
-    return 'module.exports = __non_webpack_require__(' + JSON.stringify(modulePath) + ')';
+    if (electronModulePath[0] !== '.') {
+        electronModulePath = './' + electronModulePath
+    }   
+    return 'module.exports = __non_webpack_require__(' + JSON.stringify(electronModulePath) + ')';
+}
+
+loadSubstitutionMap();
+
+module.exports = function(source) {
+    let options = loaderUtils.getOptions(this);
+    let moduleName = loaderUtils.interpolateName(this, "[name].[ext]", {context: "."});
+    let moduleDirectory = loaderUtils.interpolateName(this, "[path]", {context: "."});
+
+    if(moduleName.endsWith(".js")) {
+        return processJavaScriptFile(source, options, moduleDirectory);
+    } else {
+        return processNodeBinary(moduleName);
+    }
 }
