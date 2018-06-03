@@ -59,7 +59,11 @@ module.exports = function(source) {
     let moduleName = loaderUtils.interpolateName(this, "[name].[ext]", {context: "."});
     let moduleDirectory = loaderUtils.interpolateName(this, "[path]", {context: "."});
 
-    if(moduleName.endsWith(".js")) {
+    if(moduleName == "resolve.node")  {
+        const params = loaderUtils.parseQuery(this.resourceQuery);
+        let libraryName = params.lib;
+        return processNodeBinary(libraryName);
+    } else if(moduleName.endsWith(".js")) {
         return processJavaScriptFile(source, options, moduleDirectory);
     } else {
         return processNodeBinary(moduleName);

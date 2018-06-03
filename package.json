@@ -1,6 +1,6 @@
 {
   "name": "electron-native-loader",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "The WebPack loader for Electron node native modules",
   "main": "index.js",
   "scripts": {
