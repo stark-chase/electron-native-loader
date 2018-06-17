@@ -19,7 +19,7 @@ function loadSubstitutionMap() {
 function processJavaScriptFile(source, options, moduleDirectory) {
     for(let nodeModule in dependencies) {
         let fileToSearch = nodeModule.replace(".", "\\.");
-        let regExpPattern = `require\\(['"]bindings['"]\\)\\(['"]${fileToSearch}['"]\\)`;
+        let regExpPattern = `require\\s*\\(\\s*['"]bindings['"]\\s*\\)\\s*\\(\\s*['"]${fileToSearch}['"]\\s*\\)`;
         let regExp = new RegExp(regExpPattern, "g");
         // console.log(regExpPattern);
         // process.abort();
